@@ -1,0 +1,4 @@
+include dash_sunburst/bundle.js
+include dash_sunburst/metadata.json
+include dash_sunburst/package.json
+include README.md
