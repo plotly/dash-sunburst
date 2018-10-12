@@ -13,9 +13,9 @@ npm install
 npm run start
 ```
 
-# Code walkthrough
+# Code walkthrough - JavaScript side
 
-Following the structure laid out in the [D3 + React tutorial](https://gist.github.com/alexcjohnson/a4b714eee8afd2123ee00cb5b3278a5f) we make two files: [`sunburst.js`](src/lib/components/sunburst.js) for the D3 component and [`Sunburst.react.js`](src/lib/components/sunburst.js) for its React/Dash wrapper. Following the `dash-component-boilerplate` example, this component is then exported using [`index.js`](src/lib/index.js) which is imported by the main component in [`App.js`](src/demo/App.js).
+Following the structure laid out in the [D3 + React tutorial](https://gist.github.com/alexcjohnson/a4b714eee8afd2123ee00cb5b3278a5f) we make two files: [`d3/sunburst.js`](src/lib/d3/sunburst.js) for the D3 component and [`components/Sunburst.react.js`](src/lib/components/Sunburst.react.js) for its React/Dash wrapper. Following the `dash-component-boilerplate` example, this component is then exported using [`index.js`](src/lib/index.js) which is imported by the main component in [`App.js`](src/demo/App.js).
 
 ## Sunburst.react.js
 
@@ -265,6 +265,51 @@ else {
 If the size and data did not change, all we do is select the paths and texts, find the selected node, transition to it, and, upon finishing that transition, update the paths - and `updatePaths` knows about `dataChange` so it can skip the `enter()` steps.
 
 And that's it! We have a zoomable sunburst chart, connected to changing data and sibling UI controls, drawn with D3 and React :tada: There are of course bits of polish to be added if this component were to be used in production - shrinking or removing text that's too big for its arc, and creating style props, for example, and nicer tooltips than the built-in `<title>` elements. But the principles are the same.
+
+# Code Walkthrough - Python side
+
+`dash-component-boilerplate` makes it super easy to connect the React component we just made to Python. As in its [README](https://github.com/plotly/dash-component-boilerplate), run:
+```
+npm run build:js-dev
+npm run build:py
+```
+(At the time of writing this a webpack bug meant we first needed to bump versions of `webpack` and `webpack-cli`, see [this issue](https://github.com/plotly/dash-component-boilerplate/issues/12)) For these build steps to run without warnings, the `lib/components` directory should contain *only* React components, which is why we moved the D3 code into its own directory, `lib/d3`. Now we can use the component in our Dash app [`usage.py`](usage.py):
+```py
+from dash_sunburst import Sunburst
+```
+
+We'll make a simple app using this component: Feeding some static data to the component, we'll display the selected path elsewhere, and create a plotly.js graph that calculates some statistics based on the displayed data and selected path. First the static data and the app layout:
+
+```py
+sunburst_data = { ... }
+
+app.layout = html.Div([
+    html.Div(
+        [Sunburst(id='sun', data=sunburst_data)],
+        style={'width': '49%', 'display': 'inline-block', 'float': 'left'}),
+    dcc.Graph(
+        id='graph',
+        style={'width': '49%', 'display': 'inline-block', 'float': 'left'}),
+    html.Div(id='output', style={'clear': 'both'})
+])
+```
+Our `Sunburst` component doesn't support `style`, so we wrap it in an `html.Div`. The `Graph` and `Div#output` are initially blank, but our callbacks will fill them in on load. The content of these callbacks is straightforward Python - check out `usage.py` for the complete code - the key is simply to identify the dependencies of each one using the `@app.callback` decorator:
+```py
+@app.callback(Output('output', 'children'), [Input('sun', 'selectedPath')])
+def display_selected(selected_path):
+    # format the selected path for display as text
+    ...
+
+@app.callback(Output('graph', 'figure'), [Input('sun', 'data'), Input('sun', 'selectedPath')])
+def display_graph(data, selected_path):
+    # crawl the sunburst data, along with its selected path,
+    # to create the related plotly.js graph
+    ...
+```
+
+And that's it! `python usage.py` gives us our D3 sunburst diagram, connected through Dash to whatever else we choose.
+
+![usage.py running](readme_usage_py.png)
 
 # More Resources
 - Learn more about Dash: https://dash.plot.ly

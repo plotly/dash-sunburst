@@ -1,7 +1,7 @@
 {
-  "src/lib/components/ExampleComponent.react.js": {
-    "description": "ExampleComponent is an example component.\nIt takes a property, `label`, and\ndisplays it.\nIt renders an input with the property `value`\nwhich is editable by the user.",
-    "displayName": "ExampleComponent",
+  "src/lib/components/Sunburst.react.js": {
+    "description": "",
+    "displayName": "Sunburst",
     "methods": [],
     "props": {
       "id": {
@@ -9,21 +9,7 @@
           "name": "string"
         },
         "required": false,
-        "description": "The ID used to identify this compnent in Dash callbacks"
-      },
-      "label": {
-        "type": {
-          "name": "string"
-        },
-        "required": true,
-        "description": "A label that will be printed when this component is rendered."
-      },
-      "value": {
-        "type": {
-          "name": "string"
-        },
-        "required": false,
-        "description": "The value displayed in the input"
+        "description": "The ID used to identify this component in Dash callbacks"
       },
       "setProps": {
         "type": {
@@ -31,6 +17,73 @@
         },
         "required": false,
         "description": "Dash-assigned callback that should be called whenever any of the\nproperties change"
+      },
+      "width": {
+        "type": {
+          "name": "number"
+        },
+        "required": false,
+        "description": "Dimensions of the figure to draw, in pixels"
+      },
+      "height": {
+        "type": {
+          "name": "number"
+        },
+        "required": false,
+        "description": ""
+      },
+      "padding": {
+        "type": {
+          "name": "number"
+        },
+        "required": false,
+        "description": "Pixels to leave blank around the edges"
+      },
+      "innerRadius": {
+        "type": {
+          "name": "number"
+        },
+        "required": false,
+        "description": "Radius, in pixels, for the inner circle when you're zoomed in,\nthat you click on to zoom back out"
+      },
+      "transitionDuration": {
+        "type": {
+          "name": "number"
+        },
+        "required": false,
+        "description": "Animation duration when you click around selecting subtrees"
+      },
+      "data": {
+        "type": {
+          "name": "object"
+        },
+        "required": true,
+        "description": "The sunburst data. Should have the form:\n\n  `{name: '...', children: [c0, c1, c2]}`\n\nand children `c<i>` can have the same form to arbitrary nesting,\nor for leaf nodes the form is:\n\n  `{name: '...', size: ###}`"
+      },
+      "dataVersion": {
+        "type": {
+          "name": "union",
+          "value": [
+            {
+              "name": "string"
+            },
+            {
+              "name": "number"
+            }
+          ]
+        },
+        "required": false,
+        "description": "Optional version id for data, to avoid having to diff a large object"
+      },
+      "selectedPath": {
+        "type": {
+          "name": "arrayOf",
+          "value": {
+            "name": "string"
+          }
+        },
+        "required": false,
+        "description": "The currently selected path within the sunburst\nas an array of child names"
       }
     }
   }
