@@ -10,10 +10,6 @@ To run the demo:
 ```
 npm install
 ```
-3. Open up the JavaScript demo environment:
-```
-npm run start
-```
 
 # Code walkthrough - JavaScript side
 
@@ -266,7 +262,12 @@ else {
 
 If the size and data did not change, all we do is select the paths and texts, find the selected node, transition to it, and, upon finishing that transition, update the paths - and `updatePaths` knows about `dataChange` so it can skip the `enter()` steps.
 
-And that's it! We have a zoomable sunburst chart, connected to changing data and sibling UI controls, drawn with D3 and React :tada: There are of course bits of polish to be added if this component were to be used in production - shrinking or removing text that's too big for its arc, and creating style props, for example, and nicer tooltips than the built-in `<title>` elements. But the principles are the same.
+Now lets open the JavaScript demo environment:
+```
+npm run start
+```
+
+Lo and behold, we have a zoomable sunburst chart, connected to changing data and sibling UI controls, drawn with D3 and React :tada: There are of course bits of polish to be added if this component were to be used in production - shrinking or removing text that's too big for its arc, and creating style props, for example, and nicer tooltips than the built-in `<title>` elements. But the principles are the same.
 
 # Code Walkthrough - Python side
 
