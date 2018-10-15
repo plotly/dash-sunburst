@@ -48,6 +48,7 @@ app.layout = html.Div([
     dash_sunburst.Sunburst(
         id='sun',
         data=create_data(1, 1),
+        updatemode='replace'
     )
 ])
 

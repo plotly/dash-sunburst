@@ -44,6 +44,7 @@ app.layout = html.Div([
         id='sun',
         data=create_data(1, 1),
         selectedPath=[],
+        updatemode='replace'
     ),
 ])
 

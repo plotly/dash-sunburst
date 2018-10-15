@@ -3,24 +3,46 @@ import PropTypes from 'prop-types';
 import SunburstD3 from '../d3/sunburst';
 
 export default class Sunburst extends Component {
-    componentDidMount() {
-        this.sunburst = new SunburstD3(this.el, this.props, figure => {
-            const {setProps} = this.props;
-            const {selectedPath} = figure;
-
-            if (setProps) { setProps({selectedPath}); }
-            else { this.setState({selectedPath}); }
-        });
+    constructor(props) {
+        super(props);
+        this.create = this.create.bind(this);
     }
 
-    componentDidUpdate() {
-        this.sunburst.update(this.props);
+    componentDidMount() {
+        this.create();
+    }
+
+    componentDidUpdate(prevProps) {
+        if (this.props.updatemode === 'replace') {
+            if (JSON.stringify(this.props) !== JSON.stringify(prevProps)) {
+                this.el.innerHTML = '';
+                this.create();
+            }
+        } else {
+            this.sunburst.update(this.props);
+        }
+    }
+
+    create() {
+        this.sunburst = new SunburstD3(this.el, this.props, figure => {
+           const {setProps} = this.props;
+           const {selectedPath} = figure;
+
+           if (setProps) { setProps({selectedPath}); }
+           else { this.setState({selectedPath}); }
+       });
     }
 
     render() {
         return <div id={this.props.id} ref={el => {this.el = el}} />;
     }
 }
+
+
+Sunburst.defaultProps = {
+    updatemode: 'animage'
+};
+
 
 Sunburst.propTypes = {
     /**
@@ -81,5 +103,12 @@ Sunburst.propTypes = {
      * The currently selected path within the sunburst
      * as an array of child names
      */
-    selectedPath: PropTypes.arrayOf(PropTypes.string)
+    selectedPath: PropTypes.arrayOf(PropTypes.string),
+
+    /**
+     * If 'replace', then the graph is completely replaced on updates
+     * if 'animate', then the graph tweens between updates.
+     * Use 'replace' if you are generating data server side
+     */
+    updatemode: PropTypes.oneOf(['replace', 'animate'])
 };
