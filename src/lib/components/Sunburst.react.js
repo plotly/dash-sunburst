@@ -35,9 +35,13 @@ Sunburst.propTypes = {
     setProps: PropTypes.func,
 
     /**
-     * Dimensions of the figure to draw, in pixels
+     * Width of the figure to draw, in pixels
      */
     width: PropTypes.number,
+
+    /**
+     * Height of the figure to draw, in pixels
+     */
     height: PropTypes.number,
 
     /**
