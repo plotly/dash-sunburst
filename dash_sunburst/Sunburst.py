@@ -9,8 +9,8 @@ class Sunburst(Component):
 
 Keyword arguments:
 - id (string; optional): The ID used to identify this component in Dash callbacks
-- width (number; optional): Dimensions of the figure to draw, in pixels
-- height (number; optional)
+- width (number; optional): Width of the figure to draw, in pixels
+- height (number; optional): Height of the figure to draw, in pixels
 - padding (number; optional): Pixels to leave blank around the edges
 - innerRadius (number; optional): Radius, in pixels, for the inner circle when you're zoomed in,
 that you click on to zoom back out
@@ -26,16 +26,19 @@ or for leaf nodes the form is:
 - dataVersion (string | number; optional): Optional version id for data, to avoid having to diff a large object
 - selectedPath (list; optional): The currently selected path within the sunburst
 as an array of child names
+- updatemode (a value equal to: 'replace', 'animate'; optional): If 'replace', then the graph is completely replaced on updates
+if 'animate', then the graph tweens between updates.
+Use 'replace' if you are generating data server side
 
 Available events: """
     @_explicitize_args
-    def __init__(self, id=Component.UNDEFINED, width=Component.UNDEFINED, height=Component.UNDEFINED, padding=Component.UNDEFINED, innerRadius=Component.UNDEFINED, transitionDuration=Component.UNDEFINED, data=Component.REQUIRED, dataVersion=Component.UNDEFINED, selectedPath=Component.UNDEFINED, **kwargs):
-        self._prop_names = ['id', 'width', 'height', 'padding', 'innerRadius', 'transitionDuration', 'data', 'dataVersion', 'selectedPath']
+    def __init__(self, id=Component.UNDEFINED, width=Component.UNDEFINED, height=Component.UNDEFINED, padding=Component.UNDEFINED, innerRadius=Component.UNDEFINED, transitionDuration=Component.UNDEFINED, data=Component.REQUIRED, dataVersion=Component.UNDEFINED, selectedPath=Component.UNDEFINED, updatemode=Component.UNDEFINED, **kwargs):
+        self._prop_names = ['id', 'width', 'height', 'padding', 'innerRadius', 'transitionDuration', 'data', 'dataVersion', 'selectedPath', 'updatemode']
         self._type = 'Sunburst'
         self._namespace = 'dash_sunburst'
         self._valid_wildcard_attributes =            []
         self.available_events = []
-        self.available_properties = ['id', 'width', 'height', 'padding', 'innerRadius', 'transitionDuration', 'data', 'dataVersion', 'selectedPath']
+        self.available_properties = ['id', 'width', 'height', 'padding', 'innerRadius', 'transitionDuration', 'data', 'dataVersion', 'selectedPath', 'updatemode']
         self.available_wildcard_properties =            []
 
         _explicit_args = kwargs.pop('_explicit_args')
@@ -43,7 +46,7 @@ Available events: """
         _locals.update(kwargs)  # For wildcard attrs
         args = {k: _locals[k] for k in _explicit_args if k != 'children'}
 
-        for k in [u'data']:
+        for k in ['data']:
             if k not in args:
                 raise TypeError(
                     'Required argument `' + k + '` was not specified.')
