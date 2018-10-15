@@ -4,12 +4,14 @@
 
 This repository demonstrates the principles of combining D3 with React, using a Sunburst chart as an example, and was created from the [`dash-component-boilerplate` template](https://github.com/plotly/dash-component-boilerplate). The Demo uses this `Sunburst` component to show the contents of a house, with items being added, removed, and resized over time, and letting you zoom in and out of the rooms and items both from within the component itself and from another control.
 
-To run the demo:
+To run the Dash demo:
 1. Clone this repo
-2. Install the dependencies:
+2. Run the demo app
 ```
-npm install
+python usage.py
 ```
+3. Open your web browser to http://localhost:8050
+![sunburst chart in Python](readme_usage_py.png)
 
 # Code walkthrough - JavaScript side
 
