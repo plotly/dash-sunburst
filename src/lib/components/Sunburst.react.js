@@ -40,7 +40,7 @@ export default class Sunburst extends Component {
 
 
 Sunburst.defaultProps = {
-    updatemode: 'animage'
+    updatemode: 'animate'
 };
 
 
