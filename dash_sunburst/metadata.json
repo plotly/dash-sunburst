@@ -110,7 +110,7 @@
         "required": false,
         "description": "If 'replace', then the graph is completely replaced on updates\nif 'animate', then the graph tweens between updates.\nUse 'replace' if you are generating data server side",
         "defaultValue": {
-          "value": "'animage'",
+          "value": "'animate'",
           "computed": false
         }
       }
