@@ -282,11 +282,11 @@ function addIndices(node) {
 }
 
 function getPath(d) {
-    return d.parent ? getPath(d.parent).concat([d.name]) : [d.name];
+    return d.parent ? getPath(d.parent).concat([d.name]) : [];
 }
 
 function getPathStr(d) {
-    return getPath(d).join(',');
+    return getPath(d).join(',') || d.name;
 }
 
 function getNode(node, path) {
