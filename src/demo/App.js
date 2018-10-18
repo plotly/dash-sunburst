@@ -31,9 +31,10 @@ class App extends Component {
                     },
                     {
                         name: 'kitchen',
+                        color: '#006',
                         children: [
-                            {name: 'fridge', size: 3},
-                            {name: 'dishwasher', size: 2},
+                            {name: 'fridge', size: 3, color: '#600'},
+                            {name: 'dishwasher', size: 2, color: '#060'},
                             {name: 'sink', size: 1},
                             {name: 'cabinets', size: 7},
                             {name: 'oven', size: 2}

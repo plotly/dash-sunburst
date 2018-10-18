@@ -191,7 +191,12 @@ export default class SunburstD3 {
                 // new item in the middle it will get the next color, and existing
                 // items will keep their colors. But if you later redraw this
                 // component straight from the final data you'll get different colors
-                .style('fill', d => self.colorScale(getPathStr(d.children ? d : d.parent)));
+                .style('fill', d => (
+                    // first look for an explicit color (or explicit parent color)
+                    d.color ||
+                    (!d.children && d.parent.color) ||
+                    self.colorScale(getPathStr(d.children ? d : d.parent))
+                ));
 
             // title is a cheap solution for tooltips; better is to call
             // `d3.on('mouse(over|out)')` and draw a tooltip.

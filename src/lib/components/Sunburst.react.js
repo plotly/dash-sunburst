@@ -91,6 +91,11 @@ Sunburst.propTypes = {
      * or for leaf nodes the form is:
      *
      *   `{name: '...', size: ###}`
+     *
+     * any node can also have a `color` property, set to any CSS color string,
+     * to use instead of the default coloring. Nodes with no children will
+     * inherit their parent's color if not specified. Otherwise colors are pulled
+     * from d3.scale.category20 in the order nodes are encountered.
      */
     data: PropTypes.object.isRequired,
 
