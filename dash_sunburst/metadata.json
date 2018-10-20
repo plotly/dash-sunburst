@@ -2,15 +2,7 @@
   "src/lib/components/Sunburst.react.js": {
     "description": "",
     "displayName": "Sunburst",
-    "methods": [
-      {
-        "name": "create",
-        "docblock": null,
-        "modifiers": [],
-        "params": [],
-        "returns": null
-      }
-    ],
+    "methods": [],
     "props": {
       "id": {
         "type": {
@@ -66,7 +58,7 @@
           "name": "object"
         },
         "required": true,
-        "description": "The sunburst data. Should have the form:\n\n  `{name: '...', children: [c0, c1, c2]}`\n\nand children `c<i>` can have the same form to arbitrary nesting,\nor for leaf nodes the form is:\n\n  `{name: '...', size: ###}`"
+        "description": "The sunburst data. Should have the form:\n\n  `{name: '...', children: [c0, c1, c2]}`\n\nand children `c<i>` can have the same form to arbitrary nesting,\nor for leaf nodes the form is:\n\n  `{name: '...', size: ###}`\n\nany node can also have a `color` property, set to any CSS color string,\nto use instead of the default coloring. Nodes with no children will\ninherit their parent's color if not specified. Otherwise colors are pulled\nfrom d3.scale.category20 in the order nodes are encountered."
       },
       "dataVersion": {
         "type": {
@@ -93,24 +85,14 @@
         "required": false,
         "description": "The currently selected path within the sunburst\nas an array of child names"
       },
-      "updatemode": {
+      "interactive": {
         "type": {
-          "name": "enum",
-          "value": [
-            {
-              "value": "'replace'",
-              "computed": false
-            },
-            {
-              "value": "'animate'",
-              "computed": false
-            }
-          ]
+          "name": "bool"
         },
         "required": false,
-        "description": "If 'replace', then the graph is completely replaced on updates\nif 'animate', then the graph tweens between updates.\nUse 'replace' if you are generating data server side",
+        "description": "",
         "defaultValue": {
-          "value": "'animate'",
+          "value": "true",
           "computed": false
         }
       }

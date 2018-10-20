@@ -1,37 +1,48 @@
 import dash
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import dash_sunburst
-import dash_core_components as dcc
 import dash_html_components as html
 
 
 N_CHILDREN = 3
 
 
-def create_data(start_level_index, node_index):
+def node_name(level_index, node_index):
+    return 'Level {}, Node {}'.format(level_index, node_index)
+
+
+def create_data_from_path(path):
+    start_level_index = len(path) + 1
+    node_index = extract_level_and_node_from_name(path[-1])[1] if len(path) else 1
     data = {
-        'name': 'Level {}, Item {}'.format(start_level_index, node_index),
+        'name': node_name(start_level_index, node_index),
         'children': [{
-            'name': 'Level {}, Item {}'.format(
-                start_level_index + 1,
-                i + 1
-            ),
+            'name': node_name(start_level_index + 1, i + 1),
             'size': 1,
             'children': [{
-                'name': 'Level {}, Item {}'.format(
-                    start_level_index + 2,
-                    j + 1
-                ),
+                'name': node_name(start_level_index + 2, j + 1),
                 'size': 1
             } for j in range(N_CHILDREN)]
         } for i in range(N_CHILDREN)]
     }
+
+    # wrap back down to level 1
+    for name in reversed(path[:-1]):
+        data = {
+            'name': name,
+            'children': [data]
+        }
+    if len(path):
+        data = {
+            'name': node_name(1, 1),
+            'children': [data]
+        }
     return data
 
 
 def extract_level_and_node_from_name(name):
     level = int(name.split(', ')[0].replace('Level ', ''))
-    node = int(name.split(', ')[1].replace('Item ', ''))
+    node = int(name.split(', ')[1].replace('Node ', ''))
     return (level, node)
 
 
@@ -42,28 +53,17 @@ app.css.config.serve_locally = True
 app.layout = html.Div([
     dash_sunburst.Sunburst(
         id='sun',
-        data=create_data(1, 1),
-        selectedPath=[],
-        updatemode='replace'
+        data=create_data_from_path([]),
+        selectedPath=[]
     ),
 ])
 
 
 @app.callback(Output('sun', 'data'),
-              [Input('sun', 'selectedPath')],
-              [State('sun', 'data')])
-def display_sun(selectedPath, data):
-    if len(selectedPath) > 0:
-        (level, node) = extract_level_and_node_from_name(selectedPath[-1])
-    elif data['name'] == 'Level 1, Item 1':
-        # initial state or user is back to the center - don't change anything
-        raise dash.exceptions.PreventUpdate()
-    else:
-        # user clicked on the center node - bring the data back one level
-        (level, _) = extract_level_and_node_from_name(data['name'])
-        level -= 1
-        node = 1
-    return create_data(level, node)
+              [Input('sun', 'selectedPath')])
+def display_sun(selectedPath):
+    print('->'.join(selectedPath))
+    return create_data_from_path(selectedPath)
 
 
 if __name__ == '__main__':

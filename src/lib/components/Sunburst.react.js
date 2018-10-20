@@ -3,27 +3,7 @@ import PropTypes from 'prop-types';
 import SunburstD3 from '../d3/sunburst';
 
 export default class Sunburst extends Component {
-    constructor(props) {
-        super(props);
-        this.create = this.create.bind(this);
-    }
-
     componentDidMount() {
-        this.create();
-    }
-
-    componentDidUpdate(prevProps) {
-        if (this.props.updatemode === 'replace') {
-            if (JSON.stringify(this.props) !== JSON.stringify(prevProps)) {
-                this.el.innerHTML = '';
-                this.create();
-            }
-        } else {
-            this.sunburst.update(this.props);
-        }
-    }
-
-    create() {
         this.sunburst = new SunburstD3(this.el, this.props, figure => {
            const {setProps} = this.props;
            const {selectedPath} = figure;
@@ -33,16 +13,18 @@ export default class Sunburst extends Component {
        });
     }
 
+    componentDidUpdate() {
+        this.sunburst.update(this.props);
+    }
+
     render() {
         return <div id={this.props.id} ref={el => {this.el = el}} />;
     }
 }
 
-
 Sunburst.defaultProps = {
-    updatemode: 'animate'
+    interactive: true
 };
-
 
 Sunburst.propTypes = {
     /**
@@ -111,9 +93,7 @@ Sunburst.propTypes = {
     selectedPath: PropTypes.arrayOf(PropTypes.string),
 
     /**
-     * If 'replace', then the graph is completely replaced on updates
-     * if 'animate', then the graph tweens between updates.
-     * Use 'replace' if you are generating data server side
+     * Sets whether you can click a node to select that path
      */
-    updatemode: PropTypes.oneOf(['replace', 'animate'])
+    interactive: PropTypes.bool
 };

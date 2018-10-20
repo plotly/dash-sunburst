@@ -151,13 +151,14 @@ class App extends Component {
 
         function renameNode() {
             // Alternate name! Eventually most of the house will be cheese!
+            //
             // Note that because we're using the node path (of names) as the
-            // data binding key, renaming a node causes it to disappear for
-            // transitionDuration time, then it reappears with its new name.
-            // The only way I see to avoid this missing period would be to
-            // key off some other id than name - otherwise how are we to tell
-            // the difference between a rename and actually removing one node
-            // and adding another with a different name?
+            // data binding key, renaming a node causes it (and all its children)
+            // to disappear for transitionDuration time, then it reappears with
+            // its new name. The only way I see to avoid this missing period
+            // would be to key off some other id than name - otherwise how are
+            // we to tell the difference between a rename and actually removing
+            // one node and adding another with a different name?
             node.name = 'cheese ' + dataVersion;
         }
     }

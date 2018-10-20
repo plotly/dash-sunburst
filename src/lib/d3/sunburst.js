@@ -28,6 +28,7 @@ export default class SunburstD3 {
     constructor(el, figure, onChange) {
         const self = this;
         self.update = self.update.bind(self);
+        self._update = self._update.bind(self);
 
         self.svg = d3.select(el).append('svg');
         self.pathGroup = self.svg.append('g');
@@ -38,7 +39,7 @@ export default class SunburstD3 {
         self.radialScale = d3.scale.sqrt();
         self.colorScale = d3.scale.category20();
         self.partition = d3.layout.partition()
-            .value(d => d.size)
+            .value(d => !d.children && d.size)
             .sort((a, b) => a.i - b.i);
 
         self.arc = d3.svg.arc()
@@ -53,16 +54,26 @@ export default class SunburstD3 {
 
         self.initialized = false;
 
+        self._promise = Promise.resolve();
+
         self.update(figure);
     }
 
     update(figure) {
+        const self = this;
+        // ensure any previous transition is complete before we start
+        self._promise = self._promise.then(() => self._update(figure));
+    }
+
+    _update(figure) {
         const self = this;
         const oldFigure = self.figure;
 
         // fill defaults in the new figure
         const width = figure.width || dflts.width;
         const height = figure.height || dflts.height;
+        // interactive: undefined defaults to true
+        const interactive = figure.interactive !== false;
         const padding = figure.padding || dflts.padding;
         const innerRadius = figure.innerRadius || dflts.innerRadius;
         const transitionDuration = figure.transitionDuration || dflts.transitionDuration;
@@ -72,6 +83,7 @@ export default class SunburstD3 {
         const newFigure = self.figure = {
             width,
             height,
+            interactive,
             padding,
             innerRadius,
             transitionDuration,
@@ -131,6 +143,10 @@ export default class SunburstD3 {
         }
 
         const transitionToNode = node => {
+            // simultaneous transitions can cause infinite loops in some cases
+            // mostly self._promise takes care of this, we want to avoid clicks
+            // during transitions.
+            self.transitioning = true;
             const transition = self.svg.transition()
                 .duration(self.figure.transitionDuration)
                 .tween('scale', () => {
@@ -173,7 +189,23 @@ export default class SunburstD3 {
             if(_dataChange) {
                 const enteringPaths = _paths.enter().append('path')
                     .style({stroke: '#fff', strokeWidth: 1})
-                    .on('click', transitionToNode);
+                    .on('click', node => {
+                        if(self.transitioning) { return; }
+                        self._promise = self._promise.then(() => {
+                            return new Promise(resolve => {
+                                if(self.figure.interactive) {
+                                    transitionToNode(node)
+                                        .each('end', () => {
+                                            self.transitioning = false;
+                                            resolve();
+                                        });
+                                }
+                                else {
+                                    resolve();
+                                }
+                            });
+                        });
+                    });
                 enteringPaths.append('title');
 
                 _texts.enter().append('text')
@@ -229,11 +261,19 @@ export default class SunburstD3 {
          * Diffing
          */
 
+        let retVal = Promise.resolve();
+
         const change = diff(oldFigure, newFigure);
-        if(!change) { return; }
+        if(!change) { return retVal; }
 
         const sizeChange = change.width || change.height || change.padding;
         const dataChange = change.data;
+
+        const oldRootName = self.rootName;
+        const newRootName = self.rootName = data.name;
+
+        const oldSelectedPath = self.selectedPath;
+        const newSelectedPath = self.selectedPath = selectedPath.slice();
 
         /*
          * Drawing
@@ -257,10 +297,23 @@ export default class SunburstD3 {
         }
 
         const selectedNode = getNode(self.nodes[0], selectedPath);
+        // no node: path is wrong, probably because we received a new selectedPath
+        // before the data it belongs with
+        if(!selectedNode) { return retVal; }
 
-        if(self.initialized) {
-            transitionToNode(selectedNode)
-                .each('end', () => updatePaths(paths, texts, dataChange));
+        const shouldAnimate = self.initialized &&
+            (newRootName === oldRootName) &&
+            (sameHead(oldSelectedPath, newSelectedPath));
+
+        if(shouldAnimate) {
+            retVal = new Promise(resolve => {
+                transitionToNode(selectedNode)
+                    .each('end', () => {
+                        updatePaths(paths, texts, dataChange);
+                        self.transitioning = false;
+                        resolve();
+                    });
+            });
         }
         else {
             // first draw has no animation, and initializes the scales
@@ -272,8 +325,17 @@ export default class SunburstD3 {
 
             self.initialized = true;
         }
+        return retVal;
     }
 };
+
+function sameHead(array1, array2) {
+    const len = Math.min(array1.length, array2.length);
+    for(let i = 0; i < len; i++) {
+        if(array1[i] !== array2[i]) { return false; }
+    }
+    return true;
+}
 
 // so we can sort by index, not by size as partition does by default.
 function addIndices(node) {
@@ -304,7 +366,7 @@ function getNode(node, path) {
             return getNode(childi, path.slice(1));
         }
     }
-    return node;
+    return false;
 }
 
 /**
