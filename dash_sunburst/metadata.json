@@ -90,7 +90,7 @@
           "name": "bool"
         },
         "required": false,
-        "description": "",
+        "description": "Sets whether you can click a node to select that path",
         "defaultValue": {
           "value": "true",
           "computed": false

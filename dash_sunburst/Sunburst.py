@@ -31,7 +31,7 @@ from d3.scale.category20 in the order nodes are encountered.
 - dataVersion (string | number; optional): Optional version id for data, to avoid having to diff a large object
 - selectedPath (list; optional): The currently selected path within the sunburst
 as an array of child names
-- interactive (boolean; optional)
+- interactive (boolean; optional): Sets whether you can click a node to select that path
 
 Available events: """
     @_explicitize_args

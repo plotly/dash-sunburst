@@ -301,9 +301,19 @@ export default class SunburstD3 {
         // before the data it belongs with
         if(!selectedNode) { return retVal; }
 
-        const shouldAnimate = self.initialized &&
+        // immediate redraw rather than transition if:
+        const shouldAnimate =
+            // first draw
+            self.initialized &&
+            // new root node
             (newRootName === oldRootName) &&
-            (sameHead(oldSelectedPath, newSelectedPath));
+            // not a pure up/down transition
+            sameHead(oldSelectedPath, newSelectedPath) &&
+            // the previous data didn't contain the new selected node
+            // this can happen if we transition selectedPath first, then data
+            (!dataChange || getNode(oldFigure.data, newSelectedPath));
+
+        console.log(shouldAnimate, oldSelectedPath, newSelectedPath);
 
         if(shouldAnimate) {
             retVal = new Promise(resolve => {
@@ -357,7 +367,8 @@ function getPathStr(d) {
 }
 
 function getNode(node, path) {
-    if(!path.length || !node.children) { return node; }
+    if(!path.length) { return node; }
+    if(!node.children) { return false; }
 
     let childi;
     for(var i = 0; i < node.children.length; i++) {
