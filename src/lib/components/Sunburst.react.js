@@ -5,12 +5,12 @@ import SunburstD3 from '../d3/sunburst';
 export default class Sunburst extends Component {
     componentDidMount() {
         this.sunburst = new SunburstD3(this.el, this.props, figure => {
-            const {setProps} = this.props;
-            const {selectedPath} = figure;
+           const {setProps} = this.props;
+           const {selectedPath} = figure;
 
-            if (setProps) { setProps({selectedPath}); }
-            else { this.setState({selectedPath}); }
-        });
+           if (setProps) { setProps({selectedPath}); }
+           else { this.setState({selectedPath}); }
+       });
     }
 
     componentDidUpdate() {
@@ -21,6 +21,10 @@ export default class Sunburst extends Component {
         return <div id={this.props.id} ref={el => {this.el = el}} />;
     }
 }
+
+Sunburst.defaultProps = {
+    interactive: true
+};
 
 Sunburst.propTypes = {
     /**
@@ -35,9 +39,13 @@ Sunburst.propTypes = {
     setProps: PropTypes.func,
 
     /**
-     * Dimensions of the figure to draw, in pixels
+     * Width of the figure to draw, in pixels
      */
     width: PropTypes.number,
+
+    /**
+     * Height of the figure to draw, in pixels
+     */
     height: PropTypes.number,
 
     /**
@@ -65,6 +73,11 @@ Sunburst.propTypes = {
      * or for leaf nodes the form is:
      *
      *   `{name: '...', size: ###}`
+     *
+     * any node can also have a `color` property, set to any CSS color string,
+     * to use instead of the default coloring. Nodes with no children will
+     * inherit their parent's color if not specified. Otherwise colors are pulled
+     * from d3.scale.category20 in the order nodes are encountered.
      */
     data: PropTypes.object.isRequired,
 
@@ -77,5 +90,10 @@ Sunburst.propTypes = {
      * The currently selected path within the sunburst
      * as an array of child names
      */
-    selectedPath: PropTypes.arrayOf(PropTypes.string)
+    selectedPath: PropTypes.arrayOf(PropTypes.string),
+
+    /**
+     * Sets whether you can click a node to select that path
+     */
+    interactive: PropTypes.bool
 };

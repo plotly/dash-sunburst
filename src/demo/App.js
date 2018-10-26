@@ -31,9 +31,10 @@ class App extends Component {
                     },
                     {
                         name: 'kitchen',
+                        color: '#006',
                         children: [
-                            {name: 'fridge', size: 3},
-                            {name: 'dishwasher', size: 2},
+                            {name: 'fridge', size: 3, color: '#600'},
+                            {name: 'dishwasher', size: 2, color: '#060'},
                             {name: 'sink', size: 1},
                             {name: 'cabinets', size: 7},
                             {name: 'oven', size: 2}
@@ -93,7 +94,7 @@ class App extends Component {
             <div>
                 <h2>Sunburst Demo</h2>
                 <p>Click a node, or select it in the dropdown, to select a subtree.</p>
-                <p>Every {this.period} seconds a node will be added, removed, or resized</p>
+                <p>Every {this.period} seconds a node will be added, removed, resized, or renamed</p>
                 <Sunburst
                     setProps={this.setProps}
                     {...this.state}
@@ -107,7 +108,6 @@ class App extends Component {
 
     mutateData() {
         const {data, dataVersion} = this.state;
-        const newName = 'box ' + dataVersion;
         const newSize = Math.round(Math.random() * 200) / 10;
 
         // Pick a random node
@@ -115,13 +115,14 @@ class App extends Component {
         const {node, parent} = nodes[Math.floor(Math.random() * nodes.length)];
 
         // Pick a random operation to execute on this node
-        const operations = [addChild, resizeNode, removeNode];
+        const operations = [addChild, resizeNode, removeNode, renameNode];
         const operation = operations[Math.floor(Math.random() * operations.length)];
 
         operation();
         this.setState({dataVersion: dataVersion + 1, data: data});
 
         function addChild() {
+            const newName = 'box ' + dataVersion;
             const newChild = {name: newName, size: newSize};
             if(node.children) {
                 node.children.push(newChild);
@@ -146,6 +147,19 @@ class App extends Component {
                     parent.size = newSize;
                 }
             }
+        }
+
+        function renameNode() {
+            // Alternate name! Eventually most of the house will be cheese!
+            //
+            // Note that because we're using the node path (of names) as the
+            // data binding key, renaming a node causes it (and all its children)
+            // to disappear for transitionDuration time, then it reappears with
+            // its new name. The only way I see to avoid this missing period
+            // would be to key off some other id than name - otherwise how are
+            // we to tell the difference between a rename and actually removing
+            // one node and adding another with a different name?
+            node.name = 'cheese ' + dataVersion;
         }
     }
 }
