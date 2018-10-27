@@ -5,12 +5,12 @@ import SunburstD3 from '../d3/sunburst';
 export default class Sunburst extends Component {
     componentDidMount() {
         this.sunburst = new SunburstD3(this.el, this.props, figure => {
-           const {setProps} = this.props;
-           const {selectedPath} = figure;
+            const {setProps} = this.props;
+            const {selectedPath} = figure;
 
-           if (setProps) { setProps({selectedPath}); }
-           else { this.setState({selectedPath}); }
-       });
+            if (setProps) { setProps({selectedPath}); }
+            else { this.setState({selectedPath}); }
+        });
     }
 
     componentDidUpdate() {
