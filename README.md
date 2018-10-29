@@ -39,11 +39,12 @@ Sunburst.propTypes = {
     transitionDuration: PropTypes.number,
     data: PropTypes.object.isRequired,
     dataVersion: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    selectedPath: PropTypes.arrayOf(PropTypes.string)
+    selectedPath: PropTypes.arrayOf(PropTypes.string),
+    interactive: PropTypes.bool
 };
 ```
 
-In addition to the standard `id` and `setProps` props, we insert all the state needed by the D3 component as props of the React wrapper. This gives us type validation - for the most part anyway; this example doesn't validate the structure of `data`, nor put limits on the numeric fields, but a more production-ready version may want to do this. Note in particular the `dataVersion` prop. We will use this to avoid having to copy - and diff - the entire `data` object, which may be large and tedious. Also `selectedPath`, which is connected to the state of the user interaction with the sunburst, as different parts of the subtree are selected.
+In addition to the standard `id` and `setProps` props, we insert all the state needed by the D3 component as props of the React wrapper. This gives us type validation - for the most part anyway; this example doesn't validate the structure of `data`, nor put limits on the numeric fields, but a more production-ready version may want to do this. Note in particular the `dataVersion` prop. We will use this to avoid having to copy - and diff - the entire `data` object, which may be large and tedious. Also `selectedPath`, which is connected to the state of the user interaction with the sunburst, as different parts of the subtree are selected. `interactive` lets you disable click-to-select nodes, when you want that managed elsewhere.
 
 ```js
 render() {
@@ -118,7 +119,7 @@ render() {
         <div>
             <h2>Sunburst Demo</h2>
             <p>Click a node, or select it in the dropdown, to select a subtree.</p>
-            <p>Every {this.period} seconds a node will be added, removed, or resized</p>
+            <p>Every {this.period} seconds a node will be added, removed, resized, or renamed</p>
             <Sunburst
                 setProps={this.setProps}
                 {...this.state}
@@ -141,6 +142,7 @@ Finally, here's the D3 code, all contained in a class we export as `SunburstD3`.
 constructor(el, figure, onChange) {
     const self = this;
     self.update = self.update.bind(self);
+    self._update = self._update.bind(self);
 
     self.svg = d3.select(el).append('svg');
     self.pathGroup = self.svg.append('g');
@@ -151,7 +153,7 @@ constructor(el, figure, onChange) {
     self.radialScale = d3.scale.sqrt();
     self.colorScale = d3.scale.category20();
     self.partition = d3.layout.partition()
-        .value(d => d.size)
+        .value(d => !d.children && d.size)
         .sort((a, b) => a.i - b.i);
 
     self.arc = d3.svg.arc()
@@ -166,6 +168,8 @@ constructor(el, figure, onChange) {
 
     self.initialized = false;
 
+    self._promise = Promise.resolve();
+
     self.update(figure);
 }
 ```
@@ -174,8 +178,9 @@ Our constructor does 3 things:
 1. Creates the container elements that we'll need no matter what specific diagram we render inside: `self.svg` is the `<svg>` element, `self.pathGroup` will contain the sunburst arcs, and `self.textGroup` will hold text, added as a separate group so the text will always be in front of the arcs.
 2. Pre-calculates d3 helpers that won't change later (`self.angularScale` through `self.arc`)
 3. Sends the initial figure to `self.update`.
+There's also a bit of complication around updating potentially during animations. `self._promise` is a chain that's added on to whenever a new animation is scheduled, and `self.update` is an async wrapper around the synchronous `self._update`, ensuring a new figure is applied only after that chain is complete.
 
-`self.update` is the meat, so we'll tackle it in pieces:
+`self._update` is the meat, so we'll tackle it in pieces:
 
 ### Figure setup
 ```js
@@ -184,6 +189,8 @@ const oldFigure = self.figure;
 // fill defaults in the new figure
 const width = figure.width || dflts.width;
 const height = figure.height || dflts.height;
+// interactive: undefined defaults to true
+const interactive = figure.interactive !== false;
 const padding = figure.padding || dflts.padding;
 const innerRadius = figure.innerRadius || dflts.innerRadius;
 const transitionDuration = figure.transitionDuration || dflts.transitionDuration;
@@ -191,15 +198,22 @@ const {data, dataVersion} = figure;
 const selectedPath = figure.selectedPath || [];
 
 const newFigure = self.figure = {
-    width, height, padding, innerRadius, transitionDuration,
-    data, dataVersion, selectedPath
+    width,
+    height,
+    interactive,
+    padding,
+    innerRadius,
+    transitionDuration,
+    data,
+    dataVersion,
+    selectedPath
 };
 ```
 
 Here we stash the previous figure as `oldFigure` and create a new one, inserting default values where values were not provided.
 
 Next comes functions containing our standard D3 code (which was inspired by https://bl.ocks.org/mbostock/4348373 but has been heavily modified, as you can see. Notice that I'm using D3V3 here so some things will change if you're using V4 or V5), but we've broken up the activity by purpose, `transitionToNode`, `updatePaths`, and `setSize`. We'll use these depending on the observed changes. The only items I want to call out within this block are
-1. `transitionToNode` is used as the `click` callback for our arcs.
+1. `transitionToNode` is used in the `click` callback for our nodes (wrapped up with animation management code).
 2. At the end of `transitionToNode` is the block:
 ```js
 if(self.onChange) {
@@ -223,7 +237,7 @@ We compare the old and new figures to determine what changed. Here we're concern
 2) Did the size of the figure change? If so there are more extensive things we need to do, that will require updating the size and position of all our paths and text elements.
 3) Did the data change? Inside `diff` we look for `dataVersion`, and if we find it we skip comparing `data` itself between the old and new figures, instead reporting changes in `dataVersion` as `change.data`.
 
-There can be other changes that lead to a truthy `change` without setting either `sizeChange` or `dataChange` - here that would be `innerRadius` and `selectedPath`, but in general if we added styling properties (colors, line widths, font sizes...) they would fall into this category. Those can follow the minimal update pathway below.
+There can be other changes that lead to a truthy `change` without setting either `sizeChange` or `dataChange` - such as `innerRadius` and `selectedPath`, and in general if we added styling properties (colors, line widths, font sizes...) they would fall into this category too. Those can follow the minimal update pathway below.
 
 ### Drawing
 ```js
@@ -245,10 +259,33 @@ if(dataChange) {
 }
 
 const selectedNode = getNode(self.nodes[0], selectedPath);
+// no node: path is wrong, probably because we received a new selectedPath
+// before the data it belongs with
+if(!selectedNode) { return retVal; }
 
-if(self.initialized) {
-    transitionToNode(selectedNode)
-        .each('end', () => updatePaths(paths, texts, dataChange));
+// immediate redraw rather than transition if:
+const shouldAnimate =
+    // first draw
+    self.initialized &&
+    // new root node
+    (newRootName === oldRootName) &&
+    // not a pure up/down transition
+    sameHead(oldSelectedPath, newSelectedPath) &&
+    // the previous data didn't contain the new selected node
+    // this can happen if we transition selectedPath first, then data
+    (!dataChange || getNode(oldFigure.data, newSelectedPath));
+
+console.log(shouldAnimate, oldSelectedPath, newSelectedPath);
+
+if(shouldAnimate) {
+    retVal = new Promise(resolve => {
+        transitionToNode(selectedNode)
+            .each('end', () => {
+                updatePaths(paths, texts, dataChange);
+                self.transitioning = false;
+                resolve();
+            });
+    });
 }
 else {
     // first draw has no animation, and initializes the scales
@@ -264,6 +301,8 @@ else {
 
 If the size and data did not change, all we do is select the paths and texts, find the selected node, transition to it, and, upon finishing that transition, update the paths - and `updatePaths` knows about `dataChange` so it can skip the `enter()` steps.
 
+The logic for whether the state transition is amenable to animation or not is handled here, in `shouldAnimate`. This is important for Dash - and for React integration in general - because it means this is the *only* place we need to worry about edge detection. Dash apps are stateless, so it's particularly tricky to determine this on the Python side, and React apps are best written the same way as far down the tree as possible. D3 to a certain extent *can* work similarly, but for finer control we explicitly calculate what kind of change has been made and tell D3 whether to animate.
+
 Now lets open the JavaScript demo environment:
 ```
 npm run start
@@ -278,7 +317,7 @@ Lo and behold, we have a zoomable sunburst chart, connected to changing data and
 npm run build:js-dev
 npm run build:py
 ```
-(At the time of writing this a webpack bug meant we first needed to bump versions of `webpack` and `webpack-cli`, see [this issue](https://github.com/plotly/dash-component-boilerplate/issues/12)) For these build steps to run without warnings, the `lib/components` directory should contain *only* React components, which is why we moved the D3 code into its own directory, `lib/d3`. Now we can use the component in our Dash app [`usage.py`](usage.py):
+For these build steps to run without warnings, the `lib/components` directory should contain *only* React components, which is why we moved the D3 code into its own directory, `lib/d3`. Now we can use the component in our Dash app [`usage.py`](usage.py):
 ```py
 from dash_sunburst import Sunburst
 ```
@@ -315,6 +354,8 @@ def display_graph(data, selected_path):
 And that's it! `python usage.py` gives us our D3 sunburst diagram, connected through Dash to whatever else we choose.
 
 ![usage.py running](readme_usage_py.png)
+
+Further examples expanding on server-side updates can be found in [`usage_backend_update_via_controls.py`](usage_backend_update_via_controls.py) and [`usage_backend_update_via_selections.py`](usage_backend_update_via_selections.py)
 
 # More Resources
 - Learn more about Dash: https://dash.plot.ly
