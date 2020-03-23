@@ -1,3 +1,5 @@
+_Please note: this package is intended as a tutorial. It is not recommended for actual use in your apps - for that purpose we have the sunburst trace type in plotly.js / dcc.Graph https://plotly.com/python/sunburst-charts/_
+
 # Dash Sunburst
 
 ![sunburst chart](dash-sunburst.png)
